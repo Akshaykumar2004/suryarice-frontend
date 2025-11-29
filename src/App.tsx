@@ -30,6 +30,7 @@ import AdminReviews from './pages/admin/AdminReviews';
 import AdminFeedbacks from './pages/admin/AdminFeedbacks';
 import AdminSuppliers from './pages/admin/AdminSuppliers';
 import AdminNotifications from './pages/admin/AdminNotifications';
+import DeliveryRoutes from './pages/admin/DeliveryRoutes';
 
 // Protected Route Components
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -106,6 +107,7 @@ function App() {
               }>
                 <Route index element={<AdminDashboard />} />
                 <Route path="orders" element={<AdminOrders />} />
+                <Route path="delivery-routes" element={<DeliveryRoutes />} />
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="product-images" element={<AdminProductImages />} />
                 <Route path="product-variants" element={<AdminProductVariants />} />

@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --deep-green: #0C3B2E;
+    --maroon: #7A1E20;
+    --gold: #D4A857;
+    --beige: #F5F1E8;
+    --beige-light: #FAF8F3;
+  }
+
   html {
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
@@ -14,10 +22,36 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background: var(--beige-light);
+    margin: 0;
+    padding: 0;
   }
   
   * {
     box-sizing: border-box;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.5;
   }
   
   button, input, select, textarea {

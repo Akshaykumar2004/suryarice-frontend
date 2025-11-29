@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { getCurrentLocation, getAddressFromCoords } from '../../services/api';
-import { Sun, Phone, User, MapPin, Loader, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Sun, User, MapPin, Loader, Mail, Lock, Eye, EyeOff, ArrowLeft, Phone } from 'lucide-react';
+import PhoneVerification from '../../components/auth/PhoneVerification';
+import { api } from '../../services/api';
 
 interface LocationData {
   city: string;
@@ -12,7 +14,9 @@ interface LocationData {
 }
 
 const AuthPage = () => {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  type AuthMode = 'login' | 'signup';
+  const [mode, setMode] = useState<AuthMode>('login');
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,6 +25,7 @@ const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isLocationLoading, setIsLocationLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   
   // Signup form fields
   const [signupData, setSignupData] = useState({
@@ -125,28 +130,19 @@ const AuthPage = () => {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleStartVerification = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     const cleanPhone = phoneNumber.replace(/\D/g, '');
     
-    if (cleanPhone.length !== 10) {
-      setError('Please enter a valid 10-digit phone number');
-      return;
-    }
-
-    if (!signupData.name.trim()) {
-      setError('Please enter your name');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
-      setError('Password does not meet requirements');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(`Password must contain: ${passwordValidation.errors.join(', ')}`);
       return;
     }
 
@@ -154,29 +150,73 @@ const AuthPage = () => {
     setError('');
 
     try {
-      const success = await signup({
-        mobile_number: cleanPhone,
-        password: password,
-        ...signupData
+      // Start phone verification for signup using Twilio
+      const response = await api.post('/auth/phone/start-verification/', {
+        phone_number: `+91${cleanPhone}`
       });
+
+      if (response.data.success) {
+        setShowPhoneVerification(true);
+        setIsVerifying(true);
+      } else {
+        setError('Failed to send verification code. Please try again.');
+      }
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Failed to start phone verification');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerificationComplete = async () => {
+    // Complete the signup process after verification
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const cleanPhone = phoneNumber.replace(/\D/g, '');
+      const userData = {
+        mobile_number: `+91${cleanPhone}`,
+        password: password,
+        name: signupData.name,
+        email: signupData.email || undefined,
+        address_line1: signupData.address_line1 || undefined,
+        address_line2: signupData.address_line2 || undefined,
+        city: signupData.city || undefined,
+        state: signupData.state || undefined,
+        pincode: signupData.pincode || undefined,
+        landmark: signupData.landmark || undefined,
+        is_phone_verified: true
+      };
+
+      const success = await signup(userData);
       
       if (success) {
-        // After successful signup, try to login
+        // Auto-login after successful signup
         const loginSuccess = await login(cleanPhone, password);
         if (loginSuccess) {
           navigate('/');
         } else {
-          setError('Account created successfully! Please login.');
+          // If auto-login fails, redirect to login page
           setMode('login');
+          setError('Registration successful! Please login with your credentials.');
+          setShowPhoneVerification(false);
         }
       } else {
-        setError('Signup failed. Please try again.');
+        setError('Failed to complete signup. Please try again.');
+        setShowPhoneVerification(false);
       }
-    } catch (error) {
-      setError('Signup failed. Please try again.');
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'An error occurred during signup');
+      setShowPhoneVerification(false);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBackFromVerification = () => {
+    setShowPhoneVerification(false);
+    setIsVerifying(false);
   };
 
   const getCurrentLocationData = async () => {
@@ -202,191 +242,107 @@ const AuthPage = () => {
 
   const passwordValidation = validatePassword(password);
 
+  if (showPhoneVerification) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <PhoneVerification
+          phoneNumber={`+91${phoneNumber.replace(/\D/g, '')}`}
+          onVerificationComplete={handleVerificationComplete}
+          onBack={handleBackFromVerification}
+          isNewUser={mode === 'signup'}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center py-8 px-6 safe-area-top safe-area-bottom">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <div className="w-24 h-24 bg-gradient-to-br from-orange-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
-            <Sun className="w-12 h-12 text-white" />
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-            Welcome to <span className="text-orange-400">SURYA</span>
-          </h2>
-          <p className="text-xl text-orange-200 font-medium">Premium Rice Delivery</p>
-        </div>
-
-        {/* Login Form */}
-        {mode === 'login' && (
-          <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white border-opacity-20">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-3">Login to Your Account</h3>
-              <p className="text-orange-200 text-base">Enter your credentials to continue</p>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-8">
-              <div>
-                <label htmlFor="phone" className="sr-only">Phone Number</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
-                    <Phone className="h-5 w-5 text-orange-300" />
-                  </div>
-                  <input
-                    id="phone"
-                    type="tel"
-                    required
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
-                    className="appearance-none rounded-xl relative block w-full pl-12 pr-4 py-5 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white text-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all touch-manipulation"
-                    placeholder="Enter your mobile number"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="password" className="sr-only">Password</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
-                    <Lock className="h-5 w-5 text-orange-300" />
-                  </div>
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="appearance-none rounded-xl relative block w-full pl-12 pr-14 py-5 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white text-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all touch-manipulation"
-                    placeholder="Enter your password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center touch-manipulation"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-orange-300" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-orange-300" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {error && (
-                <div className="text-red-200 text-base text-center bg-red-500 bg-opacity-30 rounded-xl p-4 border border-red-400 border-opacity-30">
-                  {error}
-                </div>
-              )}
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-white/20">
+          <div className="p-8">
+            {isVerifying && (
               <button
-                type="submit"
-                disabled={isLoading}
-                className="group relative w-full flex justify-center py-5 px-4 border border-transparent text-lg font-bold rounded-xl text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg touch-manipulation min-h-[56px]"
+                onClick={handleBackFromVerification}
+                className="flex items-center text-gray-700 hover:text-gray-900 transition-colors mb-6"
               >
-                {isLoading ? (
-                  <Loader className="animate-spin h-5 w-5" />
-                ) : (
-                  'Login'
-                )}
+                <ArrowLeft className="w-5 h-5 mr-1" /> Back
               </button>
-
-              <div className="text-center">
-                <p className="text-orange-200 text-base">
-                  Don't have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setMode('signup')}
-                    className="text-orange-300 hover:text-orange-200 active:text-orange-100 font-bold underline transition-colors touch-manipulation"
-                  >
-                    Sign up here
-                  </button>
-                </p>
+            )}
+            
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 p-3">
+                <img 
+                  src="/logo-removebg-preview.png" 
+                  alt="Surya Rice Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
-            </form>
-          </div>
-        )}
-
-        {/* Signup Form */}
-        {mode === 'signup' && (
-          <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-white border-opacity-20">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-3">Create Your Account</h3>
-              <p className="text-orange-200 text-base">Fill in your details to get started</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+              </h1>
+              <p className="text-gray-600">
+                {mode === 'login' 
+                  ? 'Sign in to your account to continue' 
+                  : 'Fill in your details to create an account'}
+              </p>
             </div>
 
-            <form onSubmit={handleSignup} className="space-y-6">
+            <form 
+              onSubmit={mode === 'login' ? handleLogin : handleStartVerification} 
+              className="space-y-6"
+            >
               {/* Phone Number */}
               <div>
-                <label className="block text-base font-semibold text-orange-200 mb-2">
-                  Mobile Number *
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
-                    <Phone className="h-5 w-5 text-orange-300" />
+                    <Phone className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="tel"
                     required
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
-                    className="appearance-none rounded-xl relative block w-full pl-12 pr-4 py-4 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all touch-manipulation"
-                    placeholder="Enter your mobile number"
-                  />
-                </div>
-              </div>
-
-              {/* Name */}
-              <div>
-                <label className="block text-base font-semibold text-orange-200 mb-2">
-                  Full Name *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
-                    <User className="h-5 w-5 text-orange-300" />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={signupData.name}
-                    onChange={(e) => setSignupData(prev => ({ ...prev, name: e.target.value }))}
-                    className="appearance-none rounded-xl relative block w-full pl-12 pr-4 py-4 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all touch-manipulation"
-                    placeholder="Enter your full name"
+                    className="appearance-none rounded-xl relative block w-full pl-12 pr-4 py-3 border border-gray-300 bg-white placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="123-456-7890"
                   />
                 </div>
               </div>
 
               {/* Password */}
               <div>
-                <label className="block text-base font-semibold text-orange-200 mb-2">
-                  Password *
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
-                    <Lock className="h-5 w-5 text-orange-300" />
+                    <Lock className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="appearance-none rounded-xl relative block w-full pl-12 pr-14 py-4 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all touch-manipulation"
-                    placeholder="Create a strong password"
+                    className="appearance-none rounded-xl relative block w-full pl-12 pr-14 py-3 border border-gray-300 bg-white placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder={mode === 'login' ? "Enter your password" : "Create a strong password"}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center touch-manipulation"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-orange-300" />
+                      <EyeOff className="h-5 w-5 text-gray-400" />
                     ) : (
-                      <Eye className="h-5 w-5 text-orange-300" />
+                      <Eye className="h-5 w-5 text-gray-400" />
                     )}
                   </button>
                 </div>
                 
-                {/* Password Strength Indicator */}
-                {password && (
+                {/* Password Strength Indicator for Signup */}
+                {mode === 'signup' && password && (
                   <div className="mt-3">
                     <div className="flex space-x-1 mb-2">
                       {[1, 2, 3, 4].map((level) => (
@@ -400,11 +356,11 @@ const AuthPage = () => {
                         />
                       ))}
                     </div>
-                    <p className="text-sm text-orange-200 font-medium">
+                    <p className="text-sm text-gray-600 font-medium">
                       {getPasswordStrengthText(passwordValidation.strength)}
                     </p>
                     {!passwordValidation.isValid && (
-                      <div className="text-sm text-red-200 mt-2 bg-red-500 bg-opacity-20 rounded-lg p-3">
+                      <div className="text-sm text-red-600 mt-2 bg-red-50 rounded-lg p-3 border border-red-200">
                         <p className="font-semibold mb-1">Password must have:</p>
                         <ul className="list-disc list-inside space-y-1">
                           {passwordValidation.errors.map((error, index) => (
@@ -417,155 +373,183 @@ const AuthPage = () => {
                 )}
               </div>
 
-              {/* Confirm Password */}
-              <div>
-                <label className="block text-base font-semibold text-orange-200 mb-2">
-                  Confirm Password *
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
-                    <Lock className="h-5 w-5 text-orange-300" />
-                  </div>
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="appearance-none rounded-xl relative block w-full pl-12 pr-14 py-4 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all touch-manipulation"
-                    placeholder="Confirm your password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center touch-manipulation"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-5 w-5 text-orange-300" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-orange-300" />
+              {mode === 'signup' && (
+                <>
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
+                        <Lock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="appearance-none rounded-xl relative block w-full pl-12 pr-14 py-3 border border-gray-300 bg-white placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="Confirm your password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
+                    {confirmPassword && password !== confirmPassword && (
+                      <p className="text-sm text-red-600 mt-2 bg-red-50 rounded-lg p-2 border border-red-200">
+                        Passwords do not match
+                      </p>
                     )}
-                  </button>
-                </div>
-                {confirmPassword && password !== confirmPassword && (
-                  <p className="text-sm text-red-200 mt-2 bg-red-500 bg-opacity-20 rounded-lg p-2">Passwords do not match</p>
-                )}
-              </div>
-
-              {/* Email */}
-              <div>
-                <label className="block text-base font-semibold text-orange-200 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
-                    <Mail className="h-5 w-5 text-orange-300" />
                   </div>
-                  <input
-                    type="email"
-                    value={signupData.email}
-                    onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
-                    className="appearance-none rounded-xl relative block w-full pl-12 pr-4 py-4 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all touch-manipulation"
-                    placeholder="Enter your email (optional)"
-                  />
-                </div>
-              </div>
 
-              {/* Address Section */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="block text-base font-semibold text-orange-200">
-                    Delivery Address
-                  </label>
-                  <button
-                    type="button"
-                    onClick={getCurrentLocationData}
-                    disabled={isLocationLoading}
-                    className="flex items-center space-x-2 text-orange-300 hover:text-orange-200 active:text-orange-100 text-sm font-semibold transition-colors touch-manipulation bg-white bg-opacity-10 px-3 py-2 rounded-lg"
-                  >
-                    {isLocationLoading ? (
-                      <Loader className="animate-spin h-4 w-4" />
-                    ) : (
-                      <MapPin className="h-4 w-4" />
-                    )}
-                    <span>{isLocationLoading ? 'Getting...' : 'Use Location'}</span>
-                  </button>
-                </div>
+                  {/* Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
+                        <User className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        value={signupData.name}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, name: e.target.value }))}
+                        className="appearance-none rounded-xl relative block w-full pl-12 pr-4 py-3 border border-gray-300 bg-white placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                  </div>
 
-                <input
-                  type="text"
-                  value={signupData.address_line1}
-                  onChange={(e) => setSignupData(prev => ({ ...prev, address_line1: e.target.value }))}
-                  className="w-full px-4 py-4 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all touch-manipulation"
-                  placeholder="House/Flat No., Street"
-                />
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address (Optional)
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="email"
+                        value={signupData.email}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
+                        className="appearance-none rounded-xl relative block w-full pl-12 pr-4 py-3 border border-gray-300 bg-white placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="Enter your email"
+                      />
+                    </div>
+                  </div>
 
-                <input
-                  type="text"
-                  value={signupData.address_line2}
-                  onChange={(e) => setSignupData(prev => ({ ...prev, address_line2: e.target.value }))}
-                  className="w-full px-4 py-4 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all touch-manipulation"
-                  placeholder="Area, Landmark (Optional)"
-                />
+                  {/* Address Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Delivery Address (Optional)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={getCurrentLocationData}
+                        disabled={isLocationLoading}
+                        className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 text-sm font-semibold transition-colors"
+                      >
+                        {isLocationLoading ? (
+                          <Loader className="animate-spin h-4 w-4" />
+                        ) : (
+                          <MapPin className="h-4 w-4" />
+                        )}
+                        <span>{isLocationLoading ? 'Getting...' : 'Use Location'}</span>
+                      </button>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    value={signupData.city}
-                    onChange={(e) => setSignupData(prev => ({ ...prev, city: e.target.value }))}
-                    className="w-full px-4 py-4 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all touch-manipulation"
-                    placeholder="City"
-                  />
-                  <input
-                    type="text"
-                    value={signupData.state}
-                    onChange={(e) => setSignupData(prev => ({ ...prev, state: e.target.value }))}
-                    className="w-full px-4 py-4 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all touch-manipulation"
-                    placeholder="State"
-                  />
-                </div>
+                    <input
+                      type="text"
+                      value={signupData.address_line1}
+                      onChange={(e) => setSignupData(prev => ({ ...prev, address_line1: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 bg-white placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                      placeholder="House/Flat No., Street"
+                    />
 
-                <input
-                  type="text"
-                  value={signupData.pincode}
-                  onChange={(e) => setSignupData(prev => ({ ...prev, pincode: e.target.value }))}
-                  className="w-full px-4 py-4 border-2 border-orange-200 bg-white bg-opacity-20 placeholder-orange-200 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all touch-manipulation"
-                  placeholder="Pincode"
-                />
-              </div>
+                    <input
+                      type="text"
+                      value={signupData.address_line2}
+                      onChange={(e) => setSignupData(prev => ({ ...prev, address_line2: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 bg-white placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                      placeholder="Area, Landmark"
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        value={signupData.city}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, city: e.target.value }))}
+                        className="w-full px-4 py-3 border border-gray-300 bg-white placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                        placeholder="City"
+                      />
+                      <input
+                        type="text"
+                        value={signupData.state}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, state: e.target.value }))}
+                        className="w-full px-4 py-3 border border-gray-300 bg-white placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                        placeholder="State"
+                      />
+                    </div>
+
+                    <input
+                      type="text"
+                      value={signupData.pincode}
+                      onChange={(e) => setSignupData(prev => ({ ...prev, pincode: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 bg-white placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                      placeholder="Pincode"
+                    />
+                  </div>
+                </>
+              )}
 
               {error && (
-                <div className="text-red-200 text-base text-center bg-red-500 bg-opacity-30 rounded-xl p-4 border border-red-400 border-opacity-30">
+                <div className="text-red-700 text-sm text-center bg-red-100 rounded-lg p-3 border border-red-200">
                   {error}
                 </div>
               )}
 
               <button
                 type="submit"
-                disabled={isLoading || !passwordValidation.isValid || password !== confirmPassword}
-                className="w-full flex justify-center py-5 px-4 border border-transparent text-lg font-bold rounded-xl text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg touch-manipulation min-h-[56px]"
+                disabled={isLoading || (mode === 'signup' && (!passwordValidation.isValid || password !== confirmPassword))}
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isLoading ? (
-                  <Loader className="animate-spin h-5 w-5" />
-                ) : (
-                  'Create Account'
-                )}
+                {isLoading && <Loader className="animate-spin h-5 w-5 mr-2" />}
+                {mode === "login" ? 'Sign In' : 'Create Account'}
               </button>
 
-              <div className="text-center">
-                <p className="text-orange-200 text-base">
-                  Already have an account?{' '}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-sm text-center text-gray-600">
+                  {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
                   <button
                     type="button"
-                    onClick={() => setMode('login')}
-                    className="text-orange-300 hover:text-orange-200 active:text-orange-100 font-bold underline transition-colors touch-manipulation"
+                    onClick={() => {
+                      setMode(mode === 'login' ? 'signup' : 'login');
+                      setError('');
+                      setPassword('');
+                      setConfirmPassword('');
+                    }}
+                    className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none"
                   >
-                    Login here
+                    {mode === 'login' ? 'Sign up' : 'Sign in'}
                   </button>
                 </p>
               </div>
             </form>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

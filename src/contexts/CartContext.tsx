@@ -10,6 +10,7 @@ interface CartItem {
   price: number;
   quantity: number;
   image?: string;
+  max_order_quantity?: number;
 }
 
 interface CartContextType {

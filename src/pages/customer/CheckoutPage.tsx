@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, getCurrentLocation, getAddressFromCoords } from '../../services/api';
 import { MapPin, Loader, CreditCard, Truck } from 'lucide-react';
 import ProductImageCarousel from '../../components/ProductImageCarousel';
+import { getAllLocationsForPincode } from '../../data/locationData';
 
 interface DeliveryAddress {
   name: string;
@@ -14,6 +15,7 @@ interface DeliveryAddress {
   city: string;
   state: string;
   pincode: string;
+  area: string;
   landmark: string;
 }
 
@@ -30,6 +32,7 @@ const CheckoutPage = () => {
     city: user?.city || '',
     state: user?.state || '',
     pincode: user?.pincode || '',
+    area: user?.area || '',
     landmark: user?.landmark || ''
   });
 
@@ -37,6 +40,23 @@ const CheckoutPage = () => {
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [errors, setErrors] = useState<Partial<DeliveryAddress>>({});
+  const [availableAreas, setAvailableAreas] = useState<string[]>([]);
+
+  // Update available areas when pincode changes
+  useEffect(() => {
+    if (deliveryAddress.pincode && deliveryAddress.pincode.length === 6) {
+      const areas = getAllLocationsForPincode(deliveryAddress.pincode);
+      setAvailableAreas(areas);
+      
+      // Reset area if pincode changed and current area is not in new list
+      if (deliveryAddress.area && !areas.includes(deliveryAddress.area)) {
+        setDeliveryAddress(prev => ({ ...prev, area: '' }));
+      }
+    } else {
+      setAvailableAreas([]);
+      setDeliveryAddress(prev => ({ ...prev, area: '' }));
+    }
+  }, [deliveryAddress.pincode]);
 
   const getCurrentLocationData = async () => {
     setIsLocationLoading(true);
@@ -68,6 +88,7 @@ const CheckoutPage = () => {
     if (!deliveryAddress.city.trim()) newErrors.city = 'City is required';
     if (!deliveryAddress.state.trim()) newErrors.state = 'State is required';
     if (!deliveryAddress.pincode.trim()) newErrors.pincode = 'Pincode is required';
+    if (availableAreas.length > 0 && !deliveryAddress.area.trim()) newErrors.area = 'Area is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -87,6 +108,7 @@ const CheckoutPage = () => {
         delivery_city: deliveryAddress.city,
         delivery_state: deliveryAddress.state,
         delivery_pincode: deliveryAddress.pincode,
+        delivery_area: deliveryAddress.area,
         delivery_landmark: deliveryAddress.landmark,
         notes: notes,
         items: items.map(item => ({
@@ -251,8 +273,45 @@ const CheckoutPage = () => {
                       errors.pincode ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                     }`}
                     placeholder="Enter pincode"
+                    maxLength={6}
                   />
                   {errors.pincode && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.pincode}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Area {availableAreas.length > 0 && '*'}
+                  </label>
+                  {availableAreas.length > 0 ? (
+                    <>
+                      <select
+                        value={deliveryAddress.area}
+                        onChange={(e) => setDeliveryAddress(prev => ({ ...prev, area: e.target.value }))}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-base ${
+                          errors.area ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
+                        }`}
+                      >
+                        <option value="">Select your area</option>
+                        {availableAreas.map((area) => (
+                          <option key={area} value={area}>
+                            {area}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.area && <p className="text-red-500 text-xs mt-1.5 font-medium">{errors.area}</p>}
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        {availableAreas.length} area{availableAreas.length !== 1 ? 's' : ''} available for this pincode
+                      </p>
+                    </>
+                  ) : (
+                    <input
+                      type="text"
+                      value={deliveryAddress.area}
+                      onChange={(e) => setDeliveryAddress(prev => ({ ...prev, area: e.target.value }))}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-base bg-white"
+                      placeholder="Enter area (Optional)"
+                    />
+                  )}
                 </div>
 
                 <div>

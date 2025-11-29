@@ -59,8 +59,12 @@ const AdminLogin = () => {
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Shield className="w-12 h-12 text-white" />
+          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 p-3">
+            <img 
+              src="/logo-removebg-preview.png" 
+              alt="Surya Rice Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <h2 className="text-3xl font-bold text-white">
             <span className="text-orange-400">SURYA</span> Admin

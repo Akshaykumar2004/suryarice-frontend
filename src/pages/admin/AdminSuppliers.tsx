@@ -145,107 +145,155 @@ const AdminSuppliers = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <h1 className="text-2xl font-bold text-gray-900">Suppliers Management</h1>
-          
-          <div className="flex space-x-4">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900">Suppliers</h1>
+              <button
+                onClick={() => setShowModal(true)}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 min-h-[44px] rounded-lg flex items-center gap-2 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">Add</span>
+              </button>
+            </div>
+            
             {/* Search */}
-            <div className="flex space-x-2">
-              <div className="relative">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Search suppliers..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="Search..."
+                  className="w-full pl-10 pr-4 py-2 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm md:text-base"
                 />
               </div>
               <button
                 onClick={handleSearch}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 min-h-[44px] rounded-lg transition-colors flex items-center justify-center"
               >
-                Search
+                <Search className="w-5 h-5 md:hidden" />
+                <span className="hidden md:inline">Search</span>
               </button>
             </div>
 
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Supplier</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex items-center">
-              <MapPin className="w-8 h-8 text-blue-500" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-blue-600">Total Suppliers</p>
-                <p className="text-2xl font-bold text-blue-900">{suppliers.length}</p>
+            {/* Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-gray-100">
+              <div className="bg-blue-50 rounded-lg p-3">
+                <p className="text-xs text-blue-600 font-medium">Total</p>
+                <p className="text-xl font-bold text-blue-900">{suppliers.length}</p>
               </div>
-            </div>
-          </div>
-          <div className="bg-green-50 rounded-lg p-4">
-            <div className="flex items-center">
-              <MapPin className="w-8 h-8 text-green-500" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-green-600">Active</p>
-                <p className="text-2xl font-bold text-green-900">
-                  {suppliers.filter(s => s.is_active).length}
-                </p>
+              <div className="bg-green-50 rounded-lg p-3">
+                <p className="text-xs text-green-600 font-medium">Active</p>
+                <p className="text-xl font-bold text-green-900">{suppliers.filter(s => s.is_active).length}</p>
               </div>
-            </div>
-          </div>
-          <div className="bg-orange-50 rounded-lg p-4">
-            <div className="flex items-center">
-              <Clock className="w-8 h-8 text-orange-500" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-orange-600">Avg Lead Time</p>
-                <p className="text-2xl font-bold text-orange-900">
-                  {suppliers.length > 0 
-                    ? Math.round(suppliers.reduce((sum, s) => sum + s.lead_time_days, 0) / suppliers.length)
-                    : 0
-                  } days
+              <div className="bg-red-50 rounded-lg p-3">
+                <p className="text-xs text-red-600 font-medium">Inactive</p>
+                <p className="text-xl font-bold text-red-900">{suppliers.filter(s => !s.is_active).length}</p>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-3">
+                <p className="text-xs text-orange-600 font-medium">Avg Lead Time</p>
+                <p className="text-xl font-bold text-orange-900">
+                  {suppliers.length > 0 ? Math.round(suppliers.reduce((sum, s) => sum + s.lead_time_days, 0) / suppliers.length) : 0}d
                 </p>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Suppliers Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Supplier Details
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Terms
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+        {/* Mobile Card View */}
+        <div className="block md:hidden space-y-3">
+          {suppliers.map((supplier) => (
+            <div key={supplier.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">{supplier.name}</h3>
+                  <p className="text-sm text-gray-600">{supplier.contact_person}</p>
+                </div>
+                <button
+                  onClick={() => toggleActive(supplier.id, supplier.is_active)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    supplier.is_active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {supplier.is_active ? 'Active' : 'Inactive'}
+                </button>
+              </div>
+              <div className="space-y-2 mb-3">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Phone className="w-4 h-4" />
+                  <span>{supplier.mobile_number}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Mail className="w-4 h-4" />
+                  <span className="truncate">{supplier.email}</span>
+                </div>
+                <div className="flex items-start gap-2 text-sm text-gray-600">
+                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span className="line-clamp-2">{supplier.address}</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm mb-3 pt-3 border-t border-gray-100">
+                <div>
+                  <span className="text-gray-600">Lead Time:</span>
+                  <span className="ml-1 font-medium">{supplier.lead_time_days} days</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Min Order:</span>
+                  <span className="ml-1 font-medium">{supplier.minimum_order_quantity}</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEdit(supplier)}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 min-h-[44px] rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(supplier.id)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 min-h-[44px] rounded-lg transition-colors flex items-center justify-center"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Supplier Details
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Terms
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
               {suppliers.map((supplier) => (
                 <tr key={supplier.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -312,25 +360,25 @@ const AdminSuppliers = () => {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
+
+          {suppliers.length === 0 && (
+            <div className="text-center py-12">
+              <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No suppliers found</h3>
+              <p className="text-gray-500">Get started by adding your first supplier.</p>
+            </div>
+          )}
         </div>
 
-        {suppliers.length === 0 && (
-          <div className="text-center py-12">
-            <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No suppliers found</h3>
-            <p className="text-gray-500">Get started by adding your first supplier.</p>
-          </div>
-        )}
-      </div>
-
-      {/* Add/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        {/* Add/Edit Modal */}
+        {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 md:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}
+              {editingSupplier ? 'Edit Supplier' : 'Add Supplier'}
             </h3>
             
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -343,7 +391,7 @@ const AdminSuppliers = () => {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
                   />
                 </div>
@@ -356,7 +404,7 @@ const AdminSuppliers = () => {
                     type="text"
                     value={formData.contact_person}
                     onChange={(e) => setFormData(prev => ({ ...prev, contact_person: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
                 
@@ -368,7 +416,7 @@ const AdminSuppliers = () => {
                     type="tel"
                     value={formData.mobile_number}
                     onChange={(e) => setFormData(prev => ({ ...prev, mobile_number: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
                   />
                 </div>
@@ -381,7 +429,7 @@ const AdminSuppliers = () => {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
                 
@@ -393,7 +441,7 @@ const AdminSuppliers = () => {
                     type="number"
                     value={formData.lead_time_days}
                     onChange={(e) => setFormData(prev => ({ ...prev, lead_time_days: parseInt(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     min="1"
                   />
                 </div>
@@ -406,7 +454,7 @@ const AdminSuppliers = () => {
                     type="number"
                     value={formData.minimum_order_quantity}
                     onChange={(e) => setFormData(prev => ({ ...prev, minimum_order_quantity: parseInt(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     min="0"
                   />
                 </div>
@@ -449,7 +497,7 @@ const AdminSuppliers = () => {
                 </label>
               </div>
 
-              <div className="flex space-x-3 pt-4">
+              <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -457,13 +505,13 @@ const AdminSuppliers = () => {
                     setEditingSupplier(null);
                     resetForm();
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 min-h-[44px] border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 min-h-[44px] rounded-lg transition-colors"
                 >
                   {editingSupplier ? 'Update' : 'Create'}
                 </button>
@@ -471,7 +519,8 @@ const AdminSuppliers = () => {
             </form>
           </div>
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

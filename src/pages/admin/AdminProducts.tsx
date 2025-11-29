@@ -420,38 +420,38 @@ const AdminProducts = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <h1 className="text-2xl font-bold text-gray-900">Products Management</h1>
-          
-          <div className="flex space-x-4">
-            {/* Search */}
-            <div className="flex space-x-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Search products..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-              </div>
-              <button
-                onClick={handleSearch}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Search
-              </button>
-            </div>
-
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+        <div className="flex flex-col space-y-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Products</h1>
             <button
               onClick={openCreateModal}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-3 md:px-4 py-2 rounded-lg flex items-center space-x-1 md:space-x-2 transition-colors text-sm md:text-base"
             >
               <Plus className="w-4 h-4" />
-              <span>Add Product</span>
+              <span className="hidden sm:inline">Add Product</span>
+              <span className="sm:hidden">Add</span>
+            </button>
+          </div>
+          
+          <div className="flex gap-2">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="Search products..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm md:text-base"
+              />
+            </div>
+            <button
+              onClick={handleSearch}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors whitespace-nowrap text-sm md:text-base"
+            >
+              Search
             </button>
           </div>
         </div>
@@ -574,43 +574,43 @@ const AdminProducts = () => {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="w-full max-w-2xl rounded-lg bg-white shadow-lg">
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-lg bg-white shadow-lg my-8">
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 md:px-6 py-3 md:py-4">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">
                 {editingProduct ? 'Edit Product' : 'Add New Product'}
               </h3>
               <button
                 onClick={handleModalClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-2"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="px-6 py-6 space-y-6">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+            <form onSubmit={handleSubmit} className="px-4 md:px-6 py-4 md:py-6 space-y-4 md:space-y-6">
+              <div className="grid grid-cols-1 gap-3 md:gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
                     Product Name *
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => handleFormChange('name', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
                     Category *
                   </label>
                   <select
                     value={formData.category_id}
                     onChange={(e) => handleFormChange('category_id', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
                   >
                     <option value="">Select Category</option>
@@ -623,59 +623,59 @@ const AdminProducts = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
                     Brand
                   </label>
                   <input
                     type="text"
                     value={formData.brand}
                     onChange={(e) => handleFormChange('brand', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Optional"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
                     Origin
                   </label>
                   <input
                     type="text"
                     value={formData.origin}
                     onChange={(e) => handleFormChange('origin', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-orange-500"
                     placeholder="Optional"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
                     Display Order
                   </label>
                   <input
                     type="number"
                     value={formData.display_order}
                     onChange={(e) => handleFormChange('display_order', Number(e.target.value))}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-orange-500"
                     min={0}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
                   Description
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleFormChange('description', e.target.value)}
                   rows={4}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="Product description"
                 />
               </div>
 
-              {editingProduct ? (
+              {/* {editingProduct ? (
                 <div className="rounded-lg border border-gray-200 p-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-semibold text-gray-800">
@@ -794,7 +794,7 @@ const AdminProducts = () => {
                 <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
                   Save the product first, then edit it to manage gallery images.
                 </div>
-              )}
+              )} */}
 
               <div className="flex flex-col space-y-3 md:flex-row md:space-y-0 md:space-x-6">
                 <label className="flex items-center space-x-2">
@@ -823,16 +823,16 @@ const AdminProducts = () => {
                   type="button"
                   onClick={handleModalClose}
                   disabled={isSaving}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm md:text-base text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 rounded-lg bg-orange-500 px-4 py-2 text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex-1 rounded-lg bg-orange-500 px-4 py-2 text-sm md:text-base text-white transition-colors hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isSaving ? 'Saving...' : editingProduct ? 'Update Product' : 'Create Product'}
+                  {isSaving ? 'Saving...' : editingProduct ? 'Update' : 'Create'}
                 </button>
               </div>
             </form>

@@ -83,35 +83,40 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+        <div className="flex items-center space-x-2 text-xs md:text-sm text-gray-600">
           <Calendar className="w-4 h-4" />
-          <span>{new Date().toLocaleDateString('en-IN', { 
+          <span className="hidden md:inline">{new Date().toLocaleDateString('en-IN', { 
             weekday: 'long', 
             year: 'numeric', 
             month: 'long', 
+            day: 'numeric' 
+          })}</span>
+          <span className="md:hidden">{new Date().toLocaleDateString('en-IN', { 
+            year: 'numeric', 
+            month: 'short', 
             day: 'numeric' 
           })}</span>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {statCards.map((card, index) => {
           const Icon = card.icon;
           return (
-            <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+                  <p className="text-xs md:text-sm font-medium text-gray-600">{card.title}</p>
+                  <p className="text-xl md:text-2xl font-bold text-gray-900 mt-1">{card.value}</p>
                 </div>
-                <div className={`${card.color} p-3 rounded-lg`}>
-                  <Icon className="w-6 h-6 text-white" />
+                <div className={`${card.color} p-2 md:p-3 rounded-lg`}>
+                  <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </div>
               </div>
-              <div className="mt-4 flex items-center text-sm">
+              <div className="mt-3 md:mt-4 flex items-center text-xs md:text-sm">
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                   card.change.startsWith('+') 
                     ? 'bg-green-100 text-green-800' 
@@ -119,7 +124,7 @@ const AdminDashboard = () => {
                 }`}>
                   {card.change}
                 </span>
-                <span className="ml-2 text-gray-600">vs last month</span>
+                <span className="ml-2 text-gray-600 hidden sm:inline">vs last month</span>
               </div>
             </div>
           );
@@ -205,24 +210,24 @@ const AdminDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <button className="flex items-center justify-center px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
-            <Package className="w-5 h-5 mr-2" />
-            Add Product
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+        <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <button className="flex flex-col sm:flex-row items-center justify-center px-3 md:px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm md:text-base">
+            <Package className="w-5 h-5 sm:mr-2 mb-1 sm:mb-0" />
+            <span>Add Product</span>
           </button>
-          <button className="flex items-center justify-center px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-            <ShoppingCart className="w-5 h-5 mr-2" />
-            View Orders
+          <button className="flex flex-col sm:flex-row items-center justify-center px-3 md:px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base">
+            <ShoppingCart className="w-5 h-5 sm:mr-2 mb-1 sm:mb-0" />
+            <span>View Orders</span>
           </button>
-          <button className="flex items-center justify-center px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-            <BarChart3 className="w-5 h-5 mr-2" />
-            Restock Items
+          <button className="flex flex-col sm:flex-row items-center justify-center px-3 md:px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm md:text-base">
+            <BarChart3 className="w-5 h-5 sm:mr-2 mb-1 sm:mb-0" />
+            <span>Restock Items</span>
           </button>
-          <button className="flex items-center justify-center px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
-            <Users className="w-5 h-5 mr-2" />
-            User Reports
+          <button className="flex flex-col sm:flex-row items-center justify-center px-3 md:px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm md:text-base">
+            <Users className="w-5 h-5 sm:mr-2 mb-1 sm:mb-0" />
+            <span>User Reports</span>
           </button>
         </div>
       </div>

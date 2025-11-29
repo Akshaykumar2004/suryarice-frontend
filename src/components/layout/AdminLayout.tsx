@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { LayoutDashboard, Package, Users, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, Sun, MessageSquare, Star, Bell, Truck, Grid3x3 as Grid3X3, Tag, Images } from 'lucide-react';
+import { LayoutDashboard, Package, Users, ShoppingCart, BarChart3, Settings, LogOut, Menu, X, Sun, MessageSquare, Star, Bell, Truck, Grid3x3 as Grid3X3, Tag, Images, Navigation } from 'lucide-react';
 
 const AdminLayout = () => {
   const { user, logout } = useAuth();
@@ -12,6 +12,7 @@ const AdminLayout = () => {
   const navigation = [
     { name: 'Dashboard', href: '/secret/admin', icon: LayoutDashboard },
     { name: 'Orders', href: '/secret/admin/orders', icon: ShoppingCart },
+    { name: 'Delivery Routes', href: '/secret/admin/delivery-routes', icon: Navigation },
     { name: 'Products', href: '/secret/admin/products', icon: Package },
     { name: 'Product Variants', href: '/secret/admin/product-variants', icon: Grid3X3 },
     { name: 'Product Images', href: '/secret/admin/product-images', icon: Images },
@@ -56,9 +57,11 @@ const AdminLayout = () => {
       `}>
         <div className="flex items-center justify-between h-16 px-6 bg-gray-800">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-yellow-500 rounded-full flex items-center justify-center">
-              <Sun className="w-5 h-5 text-white" />
-            </div>
+            <img 
+              src="/logo-removebg-preview.png" 
+              alt="Surya Rice Logo" 
+              className="w-8 h-8 object-contain"
+            />
             <div className="text-white">
               <h1 className="text-lg font-bold">SURYA</h1>
               <p className="text-xs text-orange-300 -mt-1">Admin Panel</p>

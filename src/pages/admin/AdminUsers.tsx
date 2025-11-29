@@ -104,50 +104,52 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header & Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <h1 className="text-2xl font-bold text-gray-900">Users Management</h1>
-          
-          <div className="flex space-x-4">
-            {/* Search */}
-            <div className="flex space-x-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Search users..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+        {/* Header & Filters */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+          <div className="flex flex-col space-y-4">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Users</h1>
+            
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              {/* Search */}
+              <div className="flex flex-1 gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder="Search..."
+                    className="w-full pl-10 pr-4 py-2 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm md:text-base"
+                  />
+                </div>
+                <button
+                  onClick={handleSearch}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 min-h-[44px] rounded-lg transition-colors flex items-center justify-center"
+                >
+                  <Search className="w-5 h-5 md:hidden" />
+                  <span className="hidden md:inline">Search</span>
+                </button>
               </div>
-              <button
-                onClick={handleSearch}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
+
+              {/* Filter */}
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="w-full sm:w-auto border border-gray-300 rounded-lg px-3 py-2 min-h-[44px] focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm md:text-base"
               >
-                Search
-              </button>
+                <option value="all">All Users</option>
+                <option value="verified">Verified</option>
+                <option value="unverified">Unverified</option>
+                <option value="staff">Staff</option>
+              </select>
             </div>
-
-            {/* Filter */}
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            >
-              <option value="all">All Users</option>
-              <option value="verified">Verified</option>
-              <option value="unverified">Unverified</option>
-              <option value="staff">Staff</option>
-            </select>
           </div>
-        </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          {/* Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mt-4 md:mt-6">
           <div className="bg-blue-50 rounded-lg p-4">
             <div className="flex items-center">
               <Users className="w-8 h-8 text-blue-500" />
@@ -193,8 +195,68 @@ const AdminUsers = () => {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {/* Mobile Card View */}
+      <div className="block md:hidden space-y-3">
+        {users.map((user) => (
+          <div key={user.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-semibold text-lg">
+                  {(user.name || 'U').charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 truncate">{user.name || 'Unnamed User'}</h3>
+                <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                {user.phone && (
+                  <p className="text-sm text-gray-500">{user.phone}</p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+              <div>
+                <span className="text-gray-600">Role:</span>
+                <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium ${
+                  user.is_staff ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {user.is_staff ? 'Staff' : 'Customer'}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Joined:</span>
+                <span className="ml-1 font-medium">{new Date(user.date_joined).toLocaleDateString()}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleUserVerification(user.id, user.is_verified)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    user.is_verified
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}
+                >
+                  {user.is_verified ? 'Verified' : 'Unverified'}
+                </button>
+                <button
+                  onClick={() => toggleUserStatus(user.id, user.is_active)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    user.is_active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {user.is_active ? 'Active' : 'Inactive'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -322,17 +384,18 @@ const AdminUsers = () => {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        </div>
-
-        {users.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
-            <p className="text-gray-500">No users match your current filters.</p>
+              </tbody>
+            </table>
           </div>
-        )}
+
+          {users.length === 0 && (
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
+              <p className="text-gray-500">No users match your current filters.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

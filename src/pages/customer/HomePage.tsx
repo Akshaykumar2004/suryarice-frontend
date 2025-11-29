@@ -72,8 +72,12 @@ const HomePage = () => {
 
         <div className="relative max-w-4xl mx-auto text-center px-4 md:px-6 py-16 md:py-24 lg:py-32">
           <div className="flex justify-center items-center mb-6">
-            <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-orange-400 to-yellow-500 rounded-full flex items-center justify-center shadow-2xl">
-              <Sun className="w-12 h-12 md:w-14 md:h-14 text-white" />
+            <div className="w-28 h-28 md:w-36 md:h-36 flex items-center justify-center">
+              <img 
+                src="/logo-removebg-preview.png" 
+                alt="Surya Rice Logo" 
+                className="w-full h-full object-contain drop-shadow-2xl"
+              />
             </div>
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg leading-tight">

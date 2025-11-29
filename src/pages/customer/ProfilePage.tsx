@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getCurrentLocation, getAddressFromCoords } from '../../services/api';
 import { User, Phone, MapPin, Edit3, Save, X, Loader } from 'lucide-react';
+import { getAllLocationsForPincode } from '../../data/locationData';
 
 const ProfilePage = () => {
   const { user, logout, updateProfile } = useAuth();
@@ -17,8 +18,26 @@ const ProfilePage = () => {
     city: user?.city || '',
     state: user?.state || '',
     pincode: user?.pincode || '',
+    area: user?.area || '',
     landmark: user?.landmark || ''
   });
+
+  const [availableAreas, setAvailableAreas] = useState<string[]>([]);
+
+  // Update available areas when pincode changes
+  useEffect(() => {
+    if (formData.pincode && formData.pincode.length === 6) {
+      const areas = getAllLocationsForPincode(formData.pincode);
+      setAvailableAreas(areas);
+      
+      // Reset area if pincode changed and current area is not in new list
+      if (formData.area && !areas.includes(formData.area)) {
+        setFormData(prev => ({ ...prev, area: '' }));
+      }
+    } else {
+      setAvailableAreas([]);
+    }
+  }, [formData.pincode, formData.area]);
 
   const getCurrentLocationData = async () => {
     setIsLocationLoading(true);
@@ -68,6 +87,7 @@ const ProfilePage = () => {
       city: user?.city || '',
       state: user?.state || '',
       pincode: user?.pincode || '',
+      area: user?.area || '',
       landmark: user?.landmark || ''
     });
     setIsEditing(false);
@@ -276,11 +296,49 @@ const ProfilePage = () => {
                       onChange={(e) => setFormData(prev => ({ ...prev, pincode: e.target.value }))}
                       className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-base bg-white"
                       placeholder="Enter pincode"
+                      maxLength={6}
                     />
                   ) : (
                     <p className="text-gray-800 py-2 text-base">{user?.pincode || 'Not provided'}</p>
                   )}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Area
+                </label>
+                {isEditing ? (
+                  availableAreas.length > 0 ? (
+                    <>
+                      <select
+                        value={formData.area}
+                        onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-base bg-white"
+                      >
+                        <option value="">Select your area</option>
+                        {availableAreas.map((area) => (
+                          <option key={area} value={area}>
+                            {area}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        {availableAreas.length} area{availableAreas.length !== 1 ? 's' : ''} available for this pincode
+                      </p>
+                    </>
+                  ) : (
+                    <input
+                      type="text"
+                      value={formData.area}
+                      onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-base bg-white"
+                      placeholder="Enter area (Optional)"
+                    />
+                  )
+                ) : (
+                  <p className="text-gray-800 py-2 text-base">{user?.area || 'Not provided'}</p>
+                )}
               </div>
 
               <div>
